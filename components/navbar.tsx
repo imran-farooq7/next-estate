@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Search, Home, LogIn, UserPlus } from "lucide-react";
+import GoogleBtn from "./google-btn";
 
 export default function Navbar() {
   const pathname = usePathname();
