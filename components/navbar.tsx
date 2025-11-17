@@ -6,9 +6,11 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Search, Home, LogIn, UserPlus } from "lucide-react";
 import GoogleBtn from "./google-btn";
+import { useAuth } from "@/context/authContext";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { currentUser } = useAuth();
 
   return (
     <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
@@ -50,32 +52,39 @@ export default function Navbar() {
             </Button>
 
             {/* Auth Buttons */}
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                asChild
-                className={`flex items-center space-x-2 transition-all duration-200 ${
-                  pathname === "/login"
-                    ? "text-blue-600 bg-blue-50 border border-blue-200"
-                    : "text-gray-700 hover:text-blue-600"
-                }`}
-              >
-                <Link href="/login">
-                  <LogIn className="w-4 h-4" />
-                  <span>Login</span>
-                </Link>
-              </Button>
+            {currentUser ? (
+              <p>{currentUser.email}</p>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="ghost"
+                  asChild
+                  className={`flex items-center space-x-2 transition-all duration-200 ${
+                    pathname === "/login"
+                      ? "text-blue-600 bg-blue-50 border border-blue-200"
+                      : "text-gray-700 hover:text-blue-600"
+                  }`}
+                >
+                  <Link href="/login">
+                    <LogIn className="w-4 h-4" />
+                    <span>Login</span>
+                  </Link>
+                </Button>
 
-              <Button
-                asChild
-                className="bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                <Link href="/register" className="flex items-center space-x-2">
-                  <UserPlus className="w-4 h-4" />
-                  <span>Register</span>
-                </Link>
-              </Button>
-            </div>
+                <Button
+                  asChild
+                  className="bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <Link
+                    href="/register"
+                    className="flex items-center space-x-2"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>Register</span>
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Mobile Navigation */}
