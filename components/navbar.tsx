@@ -10,7 +10,7 @@ import { useAuth } from "@/context/authContext";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
 
   return (
     <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
@@ -53,7 +53,10 @@ export default function Navbar() {
 
             {/* Auth Buttons */}
             {currentUser ? (
-              <p>{currentUser.email}</p>
+              <div>
+                <p>{currentUser.email}</p>
+                <button onClick={logout}>logout</button>
+              </div>
             ) : (
               <div className="flex items-center space-x-3">
                 <Button

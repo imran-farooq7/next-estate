@@ -1,17 +1,16 @@
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { Button } from "./ui/button";
 import { auth } from "@/firebase/client";
+import { useAuth } from "@/context/authContext";
 
 const GoogleBtn = () => {
-  const handleGoogleSignIn = () => {
-    const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider);
-  };
+  const { googleSignIn } = useAuth();
+
   return (
     <Button
       type="button"
       variant="outline"
-      onClick={handleGoogleSignIn}
+      onClick={googleSignIn}
       className="w-full mt-4 flex items-center justify-center gap-3 border border-gray-300 hover:bg-gray-50 transition-colors duration-200"
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24">
