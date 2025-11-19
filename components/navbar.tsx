@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Home, LogIn, UserPlus } from "lucide-react";
 import GoogleBtn from "./google-btn";
 import { useAuth } from "@/context/authContext";
+import { UserDropdown } from "./user-dropdown";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -53,10 +54,7 @@ export default function Navbar() {
 
             {/* Auth Buttons */}
             {currentUser ? (
-              <div>
-                <p>{currentUser.email}</p>
-                <button onClick={logout}>logout</button>
-              </div>
+              <UserDropdown />
             ) : (
               <div className="flex items-center space-x-3">
                 <Button
