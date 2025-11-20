@@ -1,7 +1,13 @@
 "use client";
 
+import { clearTokens, setTokens } from "@/action/auth.actions";
 import { auth } from "@/firebase/client";
-import { GoogleAuthProvider, signInWithPopup, User } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  ParsedToken,
+  signInWithPopup,
+  User,
+} from "firebase/auth";
 import {
   createContext,
   ReactNode,
@@ -18,6 +24,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [customClaim, setCustomClaim] = useState<ParsedToken | null>(null);
   const logout = async () => {
     await auth.signOut();
   };
@@ -26,8 +33,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await signInWithPopup(auth, provider);
   };
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setCurrentUser(user ?? null);
+      if (user) {
+        const authToken = await user.getIdTokenResult();
+        setCustomClaim(authToken.claims);
+        const refreshToken = await user.refreshToken;
+        if (authToken.token && refreshToken) {
+          await setTokens(authToken.token, refreshToken);
+        }
+      } else {
+        await clearTokens();
+      }
     });
     return () => unsubscribe();
   }, []);

@@ -1,5 +1,6 @@
-import admin, { initializeApp } from "firebase-admin";
+import admin from "firebase-admin";
 import { getApps, ServiceAccount } from "firebase-admin/app";
+import { Auth, getAuth } from "firebase-admin/auth";
 import { Firestore, getFirestore } from "firebase-admin/firestore";
 
 const serviceAccount = {
@@ -7,7 +8,7 @@ const serviceAccount = {
   project_id: "next-firebase-48c0e",
   private_key_id: process.env.PRIVATE_KEY_ID!,
   private_key: process.env.PRIVATE_KEY!,
-  client_email: process.env.CLIENT_EMAIL!,
+  clientEmail: process.env.CLIENT_EMAIL!,
   client_id: process.env.CLIENT_ID!,
   auth_uri: "https://accounts.google.com/o/oauth2/auth",
   token_uri: "https://oauth2.googleapis.com/token",
@@ -18,13 +19,17 @@ const serviceAccount = {
 };
 
 let fireStore: Firestore;
+let auth: Auth;
 const currentApps = getApps();
 if (!currentApps.length) {
-  const app = initializeApp({
-    credential: admin.credential.cert(serviceAccount as ServiceAccount),
+  const app = admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
   });
   fireStore = getFirestore(app);
+  auth = getAuth(app);
 } else {
   const app = currentApps[0];
   fireStore = getFirestore(app);
+  auth = getAuth(app);
 }
+export { fireStore, auth };
