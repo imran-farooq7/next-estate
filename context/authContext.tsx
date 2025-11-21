@@ -19,12 +19,14 @@ type AuthContextType = {
   currentUser: User | null;
   logout: () => Promise<void>;
   googleSignIn: () => Promise<void>;
+  customClaim: ParsedToken | null;
 };
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [customClaim, setCustomClaim] = useState<ParsedToken | null>(null);
+
   const logout = async () => {
     await auth.signOut();
   };
@@ -38,6 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (user) {
         const authToken = await user.getIdTokenResult();
         setCustomClaim(authToken.claims);
+
         const refreshToken = await user.refreshToken;
         if (authToken.token && refreshToken) {
           await setTokens(authToken.token, refreshToken);
@@ -50,7 +53,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   return (
     <AuthContext
-      value={{ currentUser, logout, googleSignIn: handleGoogleSignIn }}
+      value={{
+        currentUser,
+        logout,
+        googleSignIn: handleGoogleSignIn,
+        customClaim,
+      }}
     >
       {children}
     </AuthContext>

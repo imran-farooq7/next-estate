@@ -15,8 +15,8 @@ import { useState } from "react";
 
 export function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { currentUser, logout } = useAuth();
-  console.log(currentUser?.photoURL, "user avatar");
+  const { currentUser, logout, customClaim } = useAuth();
+  console.log(currentUser?.photoURL, "from navbar");
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -26,12 +26,11 @@ export function UserDropdown() {
           className="relative h-10 w-10 rounded-full p-0 hover:bg-transparent focus:bg-transparent focus:ring-2 focus:ring-ring focus:ring-offset-2"
         >
           <Avatar className="h-10 w-10 border-2 border-transparent hover:border-primary/20 transition-colors">
-            {currentUser?.photoURL && (
-              <AvatarImage
-                src={currentUser.photoURL}
-                alt={currentUser.displayName!}
-              />
-            )}
+            <AvatarImage
+              src={currentUser?.photoURL!}
+              alt={currentUser?.displayName!}
+            />
+
             <AvatarFallback>U</AvatarFallback>
           </Avatar>
         </Button>
@@ -67,12 +66,21 @@ export function UserDropdown() {
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
-            <Button
-              variant="ghost"
-              className="w-full justify-start h-9 px-3 text-sm font-normal text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
-            >
-              Admin Dashboard
-            </Button>
+            {customClaim?.admin ? (
+              <Button
+                variant="ghost"
+                className="w-full justify-start h-9 px-3 text-sm font-normal text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+              >
+                Admin Dashboard
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                className="w-full justify-start h-9 px-3 text-sm font-normal text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+              >
+                My Favourites
+              </Button>
+            )}
           </DropdownMenuItem>
 
           <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
