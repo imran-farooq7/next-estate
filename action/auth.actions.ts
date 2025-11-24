@@ -21,6 +21,16 @@ export const setTokens = async (accessToken: string, refreshToken: string) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
       });
+    } else {
+      const cookiesStore = await cookies();
+      cookiesStore.set("firebaseAuthToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+      });
+      cookiesStore.set("firebaseRefreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+      });
     }
   } catch (error) {
     console.log(error);
