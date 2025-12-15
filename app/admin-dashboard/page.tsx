@@ -1,6 +1,7 @@
 // import PropertiesTable from "@/components/admin/properties-table";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import Link from "next/link";
 
 // Mock data - replace with your actual data source
 const mockProperties = [
@@ -37,9 +38,11 @@ export default function AdminDashboard() {
             Manage your real estate properties
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="w-4 h-4" />
-          Add New Property
+        <Button className="gap-2" asChild>
+          <Link href={"/admin-dashboard/new"}>
+            <Plus className="w-4 h-4" />
+            Add New Property
+          </Link>
         </Button>
       </header>
 
