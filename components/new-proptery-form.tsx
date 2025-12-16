@@ -14,8 +14,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Upload, X } from "lucide-react";
+import { useAuth } from "@/context/authContext";
+import { saveProperty } from "@/action/properties.action";
 
-interface PropertyFormData {
+export interface PropertyFormData {
   address1: string;
   address2: string;
   city: string;
@@ -32,6 +34,7 @@ export default function NewPropertyForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const auth = useAuth();
 
   const [formData, setFormData] = useState<PropertyFormData>({
     address1: "",
@@ -89,6 +92,7 @@ export default function NewPropertyForm() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    const token = await auth.currentUser?.getIdToken();
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -109,10 +113,13 @@ export default function NewPropertyForm() {
       });
 
       // Here you would typically make an API call
-      console.log("Submitting property data:", formData);
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      //   await new Promise((resolve) => setTimeout(resolve, 1000));
+      const res = await saveProperty({ propertyData: formData, token: token! });
+      if (res.success) {
+        console.log(res.propertyId);
+      }
 
       // Redirect back to admin dashboard
       //   router.push("/admin");
