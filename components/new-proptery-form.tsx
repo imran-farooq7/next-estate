@@ -16,6 +16,7 @@ import {
 import { ArrowLeft, Upload, X } from "lucide-react";
 import { useAuth } from "@/context/authContext";
 import { saveProperty } from "@/action/properties.action";
+import toast from "react-hot-toast";
 
 export interface PropertyFormData {
   address1: string;
@@ -118,13 +119,15 @@ export default function NewPropertyForm() {
       //   await new Promise((resolve) => setTimeout(resolve, 1000));
       const res = await saveProperty({ propertyData: formData, token: token! });
       if (res.success) {
-        console.log(res.propertyId);
+        toast.success("Property created successfully!");
+        router.push("/admin-dashboard");
       }
 
       // Redirect back to admin dashboard
       //   router.push("/admin");
     } catch (error) {
       console.error("Error submitting form:", error);
+      toast.error("Failed to create property. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
