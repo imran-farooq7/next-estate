@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/authContext";
+import Link from "next/link";
 import { useState } from "react";
 
 export function UserDropdown() {
@@ -69,9 +70,10 @@ export function UserDropdown() {
             {customClaim?.admin ? (
               <Button
                 variant="ghost"
+                asChild
                 className="w-full justify-start h-9 px-3 text-sm font-normal text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
               >
-                Admin Dashboard
+                <Link href="/admin-dashboard">Admin Dashboard</Link>
               </Button>
             ) : (
               <Button

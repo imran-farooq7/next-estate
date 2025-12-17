@@ -1,6 +1,6 @@
-"use cache";
 // import PropertiesTable from "@/components/admin/properties-table";
 import { getAllProperties } from "@/action/properties.action";
+import PropertiesTable from "@/components/propteries-table";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
@@ -28,8 +28,6 @@ const mockProperties = [
 ];
 
 export default async function AdminDashboard() {
-  const data = await getAllProperties();
-  console.log(data);
   return (
     <div className="flex flex-col min-h-screen bg-background max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header */}
@@ -51,8 +49,8 @@ export default async function AdminDashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
-        {/* <PropertiesTable properties={mockProperties} /> */}
+      <main className="flex-1 py-6">
+        <PropertiesTable />
       </main>
     </div>
   );

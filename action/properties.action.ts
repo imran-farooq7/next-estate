@@ -28,9 +28,25 @@ export const saveProperty = async ({
 
 export const getAllProperties = async () => {
   const snapshot = await fireStore.collection("properties").get();
-  const properties = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  const properties = snapshot.docs.map(
+    (doc) =>
+      ({
+        id: doc.id,
+        ...doc.data(),
+      } as {
+        id: string;
+        address: string;
+        listingPrice: number;
+        status: string;
+        bedrooms: number;
+        bathrooms: number;
+        address1: string;
+        address2: string;
+        city: string;
+        price: number;
+        description: string;
+        images: string[];
+      })
+  );
   return properties;
 };
