@@ -50,3 +50,25 @@ export const getAllProperties = async () => {
   );
   return properties;
 };
+export const getPropertyById = async (id: string) => {
+  const properySnapShot = await fireStore
+    .collection("properties")
+    .doc(id)
+    .get();
+  const property = { id: properySnapShot.id, ...properySnapShot.data() } as {
+    id: string;
+    address: string;
+    listingPrice: number;
+    status: string;
+    bedrooms: number;
+    bathrooms: number;
+    address1: string;
+    address2: string;
+    city: string;
+    price: number;
+    description: string;
+    postCode: string;
+    images: string[];
+  };
+  return property;
+};

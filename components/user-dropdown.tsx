@@ -17,7 +17,6 @@ import { useState } from "react";
 export function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const { currentUser, logout, customClaim } = useAuth();
-  console.log(currentUser?.photoURL, "from navbar");
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>

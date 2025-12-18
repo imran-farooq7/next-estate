@@ -21,7 +21,6 @@ let fireStore: Firestore;
 let auth: Auth;
 const currentApps = getApps();
 if (!currentApps.length) {
-  console.log(process.env.PRIVATE_KEY);
   const app = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount as ServiceAccount),
   });

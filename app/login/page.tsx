@@ -34,7 +34,6 @@ const LoginForm = () => {
 
     // Simulate API call
     try {
-      console.log("Login data:", formData);
       // Add your authentication logic here
       await new Promise((resolve) => setTimeout(resolve, 1000));
     } finally {
@@ -44,7 +43,6 @@ const LoginForm = () => {
 
   const handleGoogleSignIn = () => {
     // Implement Google OAuth logic here
-    console.log("Google sign in clicked");
   };
 
   return (
