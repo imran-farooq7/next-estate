@@ -1,7 +1,7 @@
-"use cache";
 import { getAllProperties } from "@/action/properties.action";
 import { Button } from "@/components/ui/button";
 import { Edit, MoreHorizontal, Plus } from "lucide-react";
+import Link from "next/link";
 
 export default async function PropertiesTable() {
   const properties = await getAllProperties();
@@ -85,9 +85,16 @@ export default async function PropertiesTable() {
                 {/* Actions Column */}
                 <td className="p-4 align-middle">
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Edit className="w-3 h-3" />
-                      Edit
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <Link href={`/admin-dashboard/edit/${property.id}`}>
+                        <Edit className="w-3 h-3" />
+                        Edit
+                      </Link>
                     </Button>
                     <Button variant="destructive" size="sm">
                       Delete

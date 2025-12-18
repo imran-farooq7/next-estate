@@ -1,9 +1,11 @@
 // import PropertiesTable from "@/components/admin/properties-table";
 import { getAllProperties } from "@/action/properties.action";
 import PropertiesTable from "@/components/propteries-table";
+import TableSkeleton from "@/components/table-skeleton";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 
 // Mock data - replace with your actual data source
 const mockProperties = [
@@ -50,7 +52,9 @@ export default async function AdminDashboard() {
 
       {/* Main Content */}
       <main className="flex-1 py-6">
-        <PropertiesTable />
+        <Suspense fallback={<TableSkeleton />}>
+          <PropertiesTable />
+        </Suspense>
       </main>
     </div>
   );
