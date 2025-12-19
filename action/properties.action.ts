@@ -2,6 +2,7 @@
 
 import { PropertyFormData } from "@/components/new-proptery-form";
 import { auth, fireStore } from "@/firebase/server";
+import { Property } from "@/lib/types";
 
 export const saveProperty = async ({
   propertyData,
@@ -33,20 +34,7 @@ export const getAllProperties = async () => {
       ({
         id: doc.id,
         ...doc.data(),
-      } as {
-        id: string;
-        address: string;
-        listingPrice: number;
-        status: string;
-        bedrooms: number;
-        bathrooms: number;
-        address1: string;
-        address2: string;
-        city: string;
-        price: number;
-        description: string;
-        images: string[];
-      })
+      } as Property)
   );
   return properties;
 };
@@ -55,20 +43,30 @@ export const getPropertyById = async (id: string) => {
     .collection("properties")
     .doc(id)
     .get();
-  const property = { id: properySnapShot.id, ...properySnapShot.data() } as {
-    id: string;
-    address: string;
-    listingPrice: number;
-    status: string;
-    bedrooms: number;
-    bathrooms: number;
-    address1: string;
-    address2: string;
-    city: string;
-    price: number;
-    description: string;
-    postCode: string;
-    images: string[];
-  };
+  const property = {
+    id: properySnapShot.id,
+    ...properySnapShot.data(),
+  } as Property;
   return property;
+};
+
+export const updateProperty = async ({
+  property,
+  token,
+}: {
+  property: Property;
+  token: string;
+}) => {
+  const { id, ...propData } = property;
+  const verifyIdToken = await auth.verifyIdToken(token);
+  if (!verifyIdToken.admin) {
+    return {
+      success: false,
+      message: "unauthorized",
+    };
+  }
+  const propertySnapShot = await fireStore
+    .collection("properties")
+    .doc(id)
+    .update({ ...propData, updated: new Date() });
 };

@@ -14,20 +14,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
-
-interface Property {
-  id: string;
-  address1: string;
-  address2: string;
-  city: string;
-  price: number;
-  description: string;
-  postCode: string;
-  bedrooms: number;
-  bathrooms: number;
-  status: string;
-  images: string[]; // Array of image URLs
-}
+import { updateProperty } from "@/action/properties.action";
+import { Property } from "@/lib/types";
+import { useAuth } from "@/context/authContext";
+import toast from "react-hot-toast";
 
 interface PropertyFormData {
   address1: string;
@@ -39,17 +29,14 @@ interface PropertyFormData {
   bedrooms: number;
   bathrooms: number;
   status: string;
-  existingImages: string[];
-  newImages: File[];
-  removedImages: string[];
 }
 
 export default function EditPropertyForm({ property }: { property: Property }) {
   const router = useRouter();
+  const auth = useAuth();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
-  const [propertyData, setPropertyData] = useState<Property | null>(property);
+  // const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 
   const [formData, setFormData] = useState<PropertyFormData>({
     address1: property.address1,
@@ -61,9 +48,6 @@ export default function EditPropertyForm({ property }: { property: Property }) {
     bedrooms: property.bathrooms,
     bathrooms: property.bathrooms,
     status: property.status,
-    existingImages: property.images,
-    newImages: [],
-    removedImages: [],
   });
 
   const handleInputChange = (
@@ -86,45 +70,46 @@ export default function EditPropertyForm({ property }: { property: Property }) {
     }));
   };
 
-  const handleNewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+  // const handleNewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = e.target.files;
+  //   if (!files) return;
 
-    const newFiles = Array.from(files);
-    const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
+  //   const newFiles = Array.from(files);
+  //   const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
 
-    setFormData((prev) => ({
-      ...prev,
-      newImages: [...prev.newImages, ...newFiles],
-    }));
-    setNewImagePreviews((prev) => [...prev, ...newPreviews]);
-  };
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     newImages: [...prev.newImages, ...newFiles],
+  //   }));
+  //   setNewImagePreviews((prev) => [...prev, ...newPreviews]);
+  // };
 
-  const removeExistingImage = (imageUrl: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      existingImages: prev.existingImages.filter((img) => img !== imageUrl),
-      removedImages: [...prev.removedImages, imageUrl],
-    }));
-  };
+  // const removeExistingImage = (imageUrl: string) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     existingImages: prev.existingImages.filter((img) => img !== imageUrl),
+  //     removedImages: [...prev.removedImages, imageUrl],
+  //   }));
+  // };
 
-  const removeNewImage = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      newImages: prev.newImages.filter((_, i) => i !== index),
-    }));
-    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
-  };
+  // const removeNewImage = (index: number) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     newImages: prev.newImages.filter((_, i) => i !== index),
+  //   }));
+  //   setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  // };
 
-  const restoreImage = (imageUrl: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      existingImages: [...prev.existingImages, imageUrl],
-      removedImages: prev.removedImages.filter((img) => img !== imageUrl),
-    }));
-  };
+  // const restoreImage = (imageUrl: string) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     existingImages: [...prev.existingImages, imageUrl],
+  //     removedImages: prev.removedImages.filter((img) => img !== imageUrl),
+  //   }));
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    const token = await auth.currentUser?.getIdToken();
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -133,41 +118,34 @@ export default function EditPropertyForm({ property }: { property: Property }) {
 
       // Append all form fields
       Object.keys(formData).forEach((key) => {
-        if (key === "newImages") {
-          formData.newImages.forEach((file) => {
-            submitData.append("newImages", file);
-          });
-        } else if (key === "removedImages") {
-          submitData.append(
-            "removedImages",
-            JSON.stringify(formData.removedImages)
-          );
-        } else if (key === "existingImages") {
-          submitData.append(
-            "existingImages",
-            JSON.stringify(formData.existingImages)
-          );
-        } else {
-          submitData.append(
-            key,
-            formData[key as keyof PropertyFormData] as string
-          );
-        }
+        submitData.append(
+          key,
+          formData[key as keyof PropertyFormData] as string
+        );
       });
 
       submitData.append("id", property.id);
 
-      // Here you would typically make an API call
-      console.log("Updating property data:", {
-        ...formData,
-        id: property.id,
+      // // Here you would typically make an API call
+      // console.log("Updating property data:", {
+      //   ...formData,
+      //   id: property.id,
+      // });
+      await updateProperty({
+        property: {
+          id: property.id,
+          address: formData.address1,
+          ...formData,
+        },
+        token: token!,
       });
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Redirect back to admin dashboard
-      router.push("/admin");
+      toast.success("property updated");
+      router.push("/admin-dashboard");
       // Optionally show success toast
     } catch (error) {
       console.error("Error updating property:", error);
@@ -382,14 +360,14 @@ export default function EditPropertyForm({ property }: { property: Property }) {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Property Images</h2>
             <span className="text-sm text-muted-foreground">
-              {formData.existingImages.length + formData.newImages.length}{" "}
+              {/* {formData.existingImages.length + formData.newImages.length}{" "} */}
               images total
             </span>
           </div>
 
           <div className="space-y-8">
             {/* Existing Images */}
-            {formData.existingImages.length > 0 && (
+            {/* {formData.existingImages.length > 0 && (
               <div>
                 <h3 className="font-medium mb-4">Existing Images</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -418,10 +396,10 @@ export default function EditPropertyForm({ property }: { property: Property }) {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* Removed Images (if any) */}
-            {formData.removedImages.length > 0 && (
+            {/* {formData.removedImages.length > 0 && (
               <div className="p-4 border border-dashed rounded-lg">
                 <h3 className="font-medium mb-2 text-destructive">
                   Removed Images ({formData.removedImages.length})
@@ -444,7 +422,7 @@ export default function EditPropertyForm({ property }: { property: Property }) {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* New Images Upload Area */}
             <div>
@@ -466,14 +444,14 @@ export default function EditPropertyForm({ property }: { property: Property }) {
                   type="file"
                   accept="image/*"
                   multiple
-                  onChange={handleNewImageUpload}
+                  // onChange={handleNewImageUpload}
                   className="hidden"
                 />
               </div>
             </div>
 
             {/* New Image Previews */}
-            {newImagePreviews.length > 0 && (
+            {/* {newImagePreviews.length > 0 && (
               <div>
                 <h3 className="font-medium mb-4">
                   New Images ({newImagePreviews.length})
@@ -504,7 +482,7 @@ export default function EditPropertyForm({ property }: { property: Property }) {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         </div>
 
