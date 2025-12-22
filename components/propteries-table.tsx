@@ -2,6 +2,7 @@ import { getAllProperties } from "@/action/properties.action";
 import { Button } from "@/components/ui/button";
 import { Edit, MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
+import DeletePropertyBtn from "./delete-property-btn";
 
 export default async function PropertiesTable() {
   const properties = await getAllProperties();
@@ -96,9 +97,7 @@ export default async function PropertiesTable() {
                         Edit
                       </Link>
                     </Button>
-                    <Button variant="destructive" size="sm">
-                      Delete
-                    </Button>
+                    <DeletePropertyBtn id={property.id} />
                   </div>
                 </td>
               </tr>
@@ -117,7 +116,9 @@ export default async function PropertiesTable() {
           <p className="text-muted-foreground mb-4">
             Get started by adding your first property.
           </p>
-          <Button>Add Property</Button>
+          <Button>
+            <Link href={"/admin-dashboard/new"}>Add Property</Link>
+          </Button>
         </div>
       )}
     </div>

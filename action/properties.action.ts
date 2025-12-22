@@ -3,6 +3,7 @@
 import { PropertyFormData } from "@/components/new-proptery-form";
 import { auth, fireStore } from "@/firebase/server";
 import { Property } from "@/lib/types";
+import { refresh } from "next/cache";
 
 export const saveProperty = async ({
   propertyData,
@@ -69,4 +70,18 @@ export const updateProperty = async ({
     .collection("properties")
     .doc(id)
     .update({ ...propData, updated: new Date() });
+};
+export const deletePropertyById = async (token: string, id: string) => {
+  const verifyIdToken = await auth.verifyIdToken(token);
+  if (!verifyIdToken.admin) {
+    return {
+      success: false,
+      message: "unauthorized",
+    };
+  }
+  const propertyDel = await fireStore.collection("properties").doc(id).delete();
+  if (propertyDel) {
+    refresh();
+    return { success: true };
+  }
 };
