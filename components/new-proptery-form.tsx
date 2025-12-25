@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Upload, X } from "lucide-react";
 import { useAuth } from "@/context/authContext";
-import { saveProperty } from "@/action/properties.action";
+import { saveProperty, savePropertyImage } from "@/action/properties.action";
 import toast from "react-hot-toast";
 import { ref, uploadBytesResumable, UploadTask } from "firebase/storage";
 import { storage } from "@/firebase/client";
@@ -151,6 +151,13 @@ export default function NewPropertyForm() {
             uploadTasks.push(uploadBytesResumable(storageRef, image));
           });
           await Promise.all(uploadTasks);
+          await savePropertyImage(
+            {
+              propertyId: res.propertyId,
+              images: paths,
+            },
+            token!
+          );
         }
         router.push("/admin-dashboard");
       }

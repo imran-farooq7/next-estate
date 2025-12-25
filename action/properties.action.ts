@@ -85,3 +85,22 @@ export const deletePropertyById = async (token: string, id: string) => {
     return { success: true };
   }
 };
+export const savePropertyImage = async (
+  {
+    propertyId,
+    images,
+  }: {
+    propertyId: string;
+    images: string[];
+  },
+  token: string
+) => {
+  const verifyIdToken = await auth.verifyIdToken(token);
+  if (!verifyIdToken.admin) {
+    return {
+      success: false,
+      message: "unauthorized",
+    };
+  }
+  await fireStore.collection("properties").doc(propertyId).update({ images });
+};

@@ -10,5 +10,4 @@ export interface Property {
   price: number;
   description: string;
   postCode: string;
-  // images: File[];
 }
