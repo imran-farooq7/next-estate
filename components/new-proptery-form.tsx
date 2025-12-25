@@ -17,6 +17,8 @@ import { ArrowLeft, Upload, X } from "lucide-react";
 import { useAuth } from "@/context/authContext";
 import { saveProperty } from "@/action/properties.action";
 import toast from "react-hot-toast";
+import { ref, uploadBytesResumable, UploadTask } from "firebase/storage";
+import { storage } from "@/firebase/client";
 
 export interface PropertyFormData {
   address1: string;
@@ -28,7 +30,6 @@ export interface PropertyFormData {
   bedrooms: number;
   bathrooms: number;
   status: "withdrawn" | "draft" | "for sale" | "sold";
-  images: File[];
 }
 
 export default function NewPropertyForm() {
@@ -37,7 +38,18 @@ export default function NewPropertyForm() {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const auth = useAuth();
 
-  const [formData, setFormData] = useState<PropertyFormData>({
+  const [formData, setFormData] = useState<{
+    address1: string;
+    address2: string;
+    city: string;
+    postCode: string;
+    price: number;
+    description: string;
+    bedrooms: number;
+    bathrooms: number;
+    status: "withdrawn" | "draft" | "for sale" | "sold";
+    images: File[];
+  }>({
     address1: "",
     address2: "",
     city: "",
@@ -112,14 +124,34 @@ export default function NewPropertyForm() {
           );
         }
       });
-
+      const { images, ...otherData } = formData;
       // Here you would typically make an API call
 
       // Simulate API call
       //   await new Promise((resolve) => setTimeout(resolve, 1000));
-      const res = await saveProperty({ propertyData: formData, token: token! });
+      const res = await saveProperty({
+        propertyData: otherData,
+        token: token!,
+      });
       if (res.success) {
         toast.success("Property created successfully!");
+        const uploadTasks: UploadTask[] = [];
+        const paths: string[] = [];
+
+        // Handle image uploads if any
+        if (images.length > 0 && res.propertyId) {
+          images.forEach((image) => {
+            // Simulate upload task creation
+            const path = `properties/${res.propertyId}/${image.name}`;
+            paths.push(path);
+            const storageRef = ref(
+              storage,
+              `properties/${res.propertyId}/${image.name}`
+            );
+            uploadTasks.push(uploadBytesResumable(storageRef, image));
+          });
+          await Promise.all(uploadTasks);
+        }
         router.push("/admin-dashboard");
       }
 
