@@ -9,6 +9,7 @@ export async function proxy(request: NextRequest) {
   }
   const cookiesStore = await cookies();
   const authToken = cookiesStore.get("firebaseAuthToken");
+
   if (!authToken) {
     return NextResponse.redirect(new URL("/", request.url));
   }
@@ -24,5 +25,5 @@ export async function proxy(request: NextRequest) {
 
 // See "Matching Paths" below to learn more
 export const config = {
-  matcher: ["/admin-dashboard"],
+  matcher: ["/admin-dashboard", "/admin-dashboard/:path*"],
 };

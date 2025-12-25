@@ -8,6 +8,7 @@ import {
   signInWithPopup,
   User,
 } from "firebase/auth";
+import { useRouter } from "next/navigation";
 import {
   createContext,
   ReactNode,
@@ -26,9 +27,11 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [customClaim, setCustomClaim] = useState<ParsedToken | null>(null);
+  const router = useRouter();
 
   const logout = async () => {
     await auth.signOut();
+    router.refresh();
   };
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();

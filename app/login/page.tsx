@@ -12,8 +12,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import GoogleBtn from "@/components/google-btn";
+import { useAuth } from "@/context/authContext";
+import { useRouter } from "next/navigation";
 
 const LoginForm = () => {
+  const router = useRouter();
+  const auth = useAuth();
+  if (auth.currentUser) {
+    router.push("/");
+    return null;
+  }
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
