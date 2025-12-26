@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Property } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Phone, Mail, MessageSquare } from "lucide-react";
+import ContactForm from "./contact-form";
 
 interface PropertyContactProps {
   property: Property;
@@ -39,12 +40,12 @@ export default function PropertyContact({ property }: PropertyContactProps) {
           Message
         </Button>
       </div>
-      {/* 
+
       <ContactForm
         isOpen={showContactForm}
         onClose={() => setShowContactForm(false)}
         property={property}
-      /> */}
+      />
     </>
   );
 }
