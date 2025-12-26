@@ -11,19 +11,19 @@ const PropertyEditPAge = async ({
   const { id } = await params;
   const property = await getPropertyById(id);
   const plainProperty = {
-    id: property.id,
-    address: property.address1,
-    listingPrice: property.price,
-    status: property.status,
-    bedrooms: property.bedrooms,
-    bathrooms: property.bathrooms,
-    address1: property.address1,
-    address2: property.address2,
-    city: property.city,
-    price: property.price,
-    description: property.description,
-    postCode: property.postCode,
-    images: property.images,
+    id: property!.id,
+    address: property!.address1,
+    listingPrice: property!.price,
+    status: property!.status,
+    bedrooms: property!.bedrooms,
+    bathrooms: property!.bathrooms,
+    address1: property!.address1,
+    address2: property!.address2,
+    city: property!.city,
+    price: property!.price,
+    description: property!.description,
+    postCode: property!.postCode,
+    images: property!.images,
   };
   return (
     <div>

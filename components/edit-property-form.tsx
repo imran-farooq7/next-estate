@@ -14,11 +14,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
-import { updateProperty } from "@/action/properties.action";
+import { savePropertyImage, updateProperty } from "@/action/properties.action";
 import { Property } from "@/lib/types";
 import { useAuth } from "@/context/authContext";
 import toast from "react-hot-toast";
 import { UploadedImage } from "./new-proptery-form";
+import { deleteObject, ref, UploadTask } from "firebase/storage";
+import { storage } from "@/firebase/client";
+import { uploadAllImages } from "@/lib/utils";
 
 interface PropertyFormData {
   address1: string;
@@ -56,7 +59,23 @@ export default function EditPropertyForm({ property }: { property: Property }) {
     newImages: [],
     removedImages: [],
   });
-
+  useEffect(() => {
+    setFormData({
+      address1: property.address1,
+      address2: property.address2,
+      city: property.city,
+      postCode: property.postCode,
+      price: property.price,
+      description: property.description,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      status: property.status,
+      images: property.images || [],
+      newImages: [],
+      removedImages: [],
+    });
+    setNewImagePreviews([]);
+  }, [property]);
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -94,7 +113,7 @@ export default function EditPropertyForm({ property }: { property: Property }) {
   const removeExistingImage = (imageUrl: string) => {
     setFormData((prev) => ({
       ...prev,
-      existingImages: prev.images.filter((img) => img.url !== imageUrl),
+      images: prev.images.filter((img) => img.url !== imageUrl),
       removedImages: [...prev.removedImages, imageUrl],
     }));
   };
@@ -110,8 +129,11 @@ export default function EditPropertyForm({ property }: { property: Property }) {
   const restoreImage = (imageUrl: string) => {
     setFormData((prev) => ({
       ...prev,
-      existingImages: [...prev.images, imageUrl],
       removedImages: prev.removedImages.filter((img) => img !== imageUrl),
+      images: [
+        ...prev.images,
+        property.images.find((img) => img.url === imageUrl)!,
+      ],
     }));
   };
 
@@ -137,26 +159,49 @@ export default function EditPropertyForm({ property }: { property: Property }) {
       // console.log("Updating property data:", {
       //   ...formData,
       //   id: property.id,
-      // });
+      // });'
+      const { newImages, removedImages, ...data } = formData;
       const res = await updateProperty({
         property: {
           id: property.id,
-          address: formData.address1,
-          ...formData,
+          address: data.address1,
+          ...data,
         },
         token: token!,
       });
-      if (!res?.success) {
-        throw new Error(res?.message || "Failed to update property");
+      if (res?.success!) {
+        toast.error("failed to update property");
+        return;
       }
-      const imagesToDelete = formData.removedImages;
+      const storageTasks: (UploadTask | Promise<void>)[] = [];
+      const imagesToDeletePaths = formData.removedImages;
+      imagesToDeletePaths.forEach((path) => {
+        // Delete image from storage
+        storageTasks.push(deleteObject(ref(storage, path)));
+      });
+      const uploadedImages = await uploadAllImages(
+        formData.newImages,
+        property.id
+      );
+      const response = await savePropertyImage(
+        { propertyId: property.id, images: uploadedImages },
+        token!
+      );
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Redirect back to admin dashboard
-      toast.success("property updated");
-      router.push("/admin-dashboard");
+
+      router.refresh();
+
+      // Show success
+      toast.success("Property updated successfully");
+
+      // Navigate after a short delay to ensure cache is cleared
+      setTimeout(() => {
+        router.push("/admin-dashboard");
+      }, 100);
+
       // Optionally show success toast
     } catch (error) {
       console.error("Error updating property:", error);
@@ -410,7 +455,7 @@ export default function EditPropertyForm({ property }: { property: Property }) {
             )}
 
             {/* Removed Images (if any) */}
-            {/* {formData.removedImages.length > 0 && (
+            {formData.removedImages.length > 0 && (
               <div className="p-4 border border-dashed rounded-lg">
                 <h3 className="font-medium mb-2 text-destructive">
                   Removed Images ({formData.removedImages.length})

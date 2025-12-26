@@ -6,7 +6,12 @@ import {
 } from "@/components/new-proptery-form";
 import { auth, fireStore } from "@/firebase/server";
 import { Property } from "@/lib/types";
-import { refresh } from "next/cache";
+import {
+  refresh,
+  revalidatePath,
+  revalidateTag,
+  unstable_cache,
+} from "next/cache";
 
 export const saveProperty = async ({
   propertyData,
@@ -42,16 +47,18 @@ export const getAllProperties = async () => {
   );
   return properties;
 };
+
 export const getPropertyById = async (id: string) => {
-  const properySnapShot = await fireStore
-    .collection("properties")
-    .doc(id)
-    .get();
-  const property = {
-    id: properySnapShot.id,
-    ...properySnapShot.data(),
+  const doc = await fireStore.collection("properties").doc(id).get();
+
+  if (!doc.exists) {
+    return null;
+  }
+
+  return {
+    id: doc.id,
+    ...doc.data(),
   } as Property;
-  return property;
 };
 
 export const updateProperty = async ({
@@ -69,10 +76,24 @@ export const updateProperty = async ({
       message: "unauthorized",
     };
   }
-  const propertySnapShot = await fireStore
+  await fireStore
     .collection("properties")
     .doc(id)
     .update({ ...propData, updated: new Date() });
+  // revalidateTag("properties", { expire: 36000 });
+
+  // // Also revalidate the page
+  // revalidatePath(`/admin-dashboard`);
+  // revalidatePath(`/admin-dashboard/edit/${id}`);
+  // // Clear ALL relevant caches
+  // revalidateTag("properties", { expire: 360 }); // For the dashboard listing
+  // revalidateTag("property-details", { expire: 360 }); // For individual property pages
+
+  // revalidatePath("/admin-dashboard"); // Dashboard page
+  // revalidatePath(`/admin-dashboard/edit/${property.id}`); // Current edit page
+
+  // // 4. Optional: Revalidate all edit pages (if you have navigation between them)
+  // revalidatePath("/admin-dashboard/edit/[id]", "page");
 };
 export const deletePropertyById = async (token: string, id: string) => {
   const verifyIdToken = await auth.verifyIdToken(token);
@@ -106,4 +127,7 @@ export const savePropertyImage = async (
     };
   }
   await fireStore.collection("properties").doc(propertyId).update({ images });
+  8;
+  // Also revalidate the page
+  // revalidatePath("/admin-dashboard");
 };
