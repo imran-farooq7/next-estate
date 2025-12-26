@@ -17,7 +17,7 @@ import { ArrowLeft, Upload, X } from "lucide-react";
 import { useAuth } from "@/context/authContext";
 import { saveProperty, savePropertyImage } from "@/action/properties.action";
 import toast from "react-hot-toast";
-import { ref, uploadBytesResumable, UploadTask } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "@/firebase/client";
 
 export interface PropertyFormData {
@@ -30,6 +30,13 @@ export interface PropertyFormData {
   bedrooms: number;
   bathrooms: number;
   status: "withdrawn" | "draft" | "for sale" | "sold";
+}
+
+// Add this interface for image data
+export interface UploadedImage {
+  url: string;
+  path: string;
+  name: string;
 }
 
 export default function NewPropertyForm() {
@@ -104,69 +111,124 @@ export default function NewPropertyForm() {
     setPreviewImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // NEW FUNCTION: Upload single image and get URL
+  const uploadImageAndGetUrl = async (
+    file: File,
+    propertyId: string
+  ): Promise<UploadedImage> => {
+    // Create unique filename to avoid collisions
+    const timestamp = Date.now();
+    const fileExtension = file.name.split(".").pop();
+    const fileName = `image_${timestamp}.${fileExtension}`;
+    const path = `properties/${propertyId}/${fileName}`;
+
+    const storageRef = ref(storage, path);
+
+    // Upload the file
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    // Return a promise that resolves with the download URL
+    return new Promise((resolve, reject) => {
+      uploadTask.on(
+        "state_changed",
+        null, // You can add progress tracking here if needed
+        (error) => {
+          console.error("Upload error:", error);
+          reject(new Error(`Failed to upload image: ${error.message}`));
+        },
+        async () => {
+          try {
+            // Get download URL after successful upload
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            console.log("Image uploaded, URL:", downloadURL);
+
+            resolve({
+              url: downloadURL,
+              path: path,
+              name: file.name,
+            });
+          } catch (error: any) {
+            reject(new Error(`Failed to get download URL: ${error.message}`));
+          }
+        }
+      );
+    });
+  };
+
+  // NEW FUNCTION: Upload all images and get URLs
+  const uploadAllImages = async (
+    files: File[],
+    propertyId: string
+  ): Promise<UploadedImage[]> => {
+    const uploadPromises = files.map((file) =>
+      uploadImageAndGetUrl(file, propertyId)
+    );
+
+    // Use Promise.all to upload all images in parallel
+    const uploadedImages = await Promise.all(uploadPromises);
+    return uploadedImages;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     const token = await auth.currentUser?.getIdToken();
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Create FormData for file upload
-      const submitData = new FormData();
-      Object.keys(formData).forEach((key) => {
-        if (key === "images") {
-          formData.images.forEach((file) => {
-            submitData.append("images", file);
-          });
-        } else {
-          submitData.append(
-            key,
-            formData[key as keyof PropertyFormData] as string
-          );
-        }
-      });
       const { images, ...otherData } = formData;
-      // Here you would typically make an API call
 
-      // Simulate API call
-      //   await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 1. First save the property to get the property ID
       const res = await saveProperty({
         propertyData: otherData,
         token: token!,
       });
-      if (res.success) {
-        toast.success("Property created successfully!");
-        const uploadTasks: UploadTask[] = [];
-        const paths: string[] = [];
 
-        // Handle image uploads if any
-        if (images.length > 0 && res.propertyId) {
-          images.forEach((image) => {
-            // Simulate upload task creation
-            const path = `properties/${res.propertyId}/${image.name}`;
-            paths.push(path);
-            const storageRef = ref(
-              storage,
-              `properties/${res.propertyId}/${image.name}`
+      if (res.success && res.propertyId) {
+        toast.success("Property created successfully! Now uploading images...");
+
+        // 2. Upload images and get their URLs
+        if (images.length > 0) {
+          try {
+            const uploadedImages = await uploadAllImages(
+              images,
+              res.propertyId
             );
-            uploadTasks.push(uploadBytesResumable(storageRef, image));
-          });
-          await Promise.all(uploadTasks);
-          await savePropertyImage(
-            {
-              propertyId: res.propertyId,
-              images: paths,
-            },
-            token!
-          );
-        }
-        router.push("/admin-dashboard");
-      }
+            toast.success(
+              `${uploadedImages.length} images uploaded successfully!`
+            );
 
-      // Redirect back to admin dashboard
-      //   router.push("/admin");
-    } catch (error) {
+            // 3. Save image URLs to your database
+            const saveImageResult = await savePropertyImage(
+              {
+                propertyId: res.propertyId,
+                images: uploadedImages, // This now contains URLs, paths, and names
+              },
+              token!
+            );
+
+            if (saveImageResult?.success) {
+              toast.success("Property and images saved successfully!");
+            } else {
+              toast.error("Failed to save image URLs to database");
+            }
+          } catch (uploadError: any) {
+            console.error("Error uploading images:", uploadError);
+            toast.error(`Image upload failed: ${uploadError.message}`);
+            // Still proceed since property was created
+          }
+        } else {
+          toast.success("Property created without images");
+        }
+
+        router.push("/admin-dashboard");
+      } else {
+        throw new Error("Failed to create property");
+      }
+    } catch (error: any) {
       console.error("Error submitting form:", error);
-      toast.error("Failed to create property. Please try again.");
+      toast.error(
+        error.message || "Failed to create property. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -383,6 +445,9 @@ export default function NewPropertyForm() {
                   <p className="text-sm text-muted-foreground">
                     Upload up to 12 images (JPEG, PNG, WebP). Max 5MB each.
                   </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.images.length} image(s) selected
+                  </p>
                 </div>
               </Label>
               <Input
@@ -392,6 +457,7 @@ export default function NewPropertyForm() {
                 multiple
                 onChange={handleImageUpload}
                 className="hidden"
+                disabled={isSubmitting}
               />
             </div>
 
@@ -417,11 +483,21 @@ export default function NewPropertyForm() {
                         size="icon"
                         className="absolute top-2 right-2 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => removeImage(index)}
+                        disabled={isSubmitting}
                       >
                         <X className="w-3 h-3" />
                       </Button>
                       <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
-                        Image {index + 1}
+                        {formData.images[index]?.name || `Image ${index + 1}`}
+                        <br />
+                        <span className="text-[10px]">
+                          {formData.images[index] &&
+                            `${(
+                              formData.images[index].size /
+                              1024 /
+                              1024
+                            ).toFixed(2)} MB`}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -441,7 +517,7 @@ export default function NewPropertyForm() {
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting} className="min-w-40">
             {isSubmitting ? "Creating Property..." : "Create Property"}
           </Button>
         </div>

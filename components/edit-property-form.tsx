@@ -18,6 +18,7 @@ import { updateProperty } from "@/action/properties.action";
 import { Property } from "@/lib/types";
 import { useAuth } from "@/context/authContext";
 import toast from "react-hot-toast";
+import { UploadedImage } from "./new-proptery-form";
 
 interface PropertyFormData {
   address1: string;
@@ -29,6 +30,9 @@ interface PropertyFormData {
   bedrooms: number;
   bathrooms: number;
   status: string;
+  images: UploadedImage[];
+  newImages: File[];
+  removedImages: string[];
 }
 
 export default function EditPropertyForm({ property }: { property: Property }) {
@@ -36,7 +40,7 @@ export default function EditPropertyForm({ property }: { property: Property }) {
   const auth = useAuth();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
 
   const [formData, setFormData] = useState<PropertyFormData>({
     address1: property.address1,
@@ -48,6 +52,9 @@ export default function EditPropertyForm({ property }: { property: Property }) {
     bedrooms: property.bathrooms,
     bathrooms: property.bathrooms,
     status: property.status,
+    images: property.images,
+    newImages: [],
+    removedImages: [],
   });
 
   const handleInputChange = (
@@ -70,43 +77,43 @@ export default function EditPropertyForm({ property }: { property: Property }) {
     }));
   };
 
-  // const handleNewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const files = e.target.files;
-  //   if (!files) return;
+  const handleNewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
 
-  //   const newFiles = Array.from(files);
-  //   const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
+    const newFiles = Array.from(files);
+    const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
 
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     newImages: [...prev.newImages, ...newFiles],
-  //   }));
-  //   setNewImagePreviews((prev) => [...prev, ...newPreviews]);
-  // };
+    setFormData((prev) => ({
+      ...prev,
+      newImages: [...prev.newImages, ...newFiles],
+    }));
+    setNewImagePreviews((prev) => [...prev, ...newPreviews]);
+  };
 
-  // const removeExistingImage = (imageUrl: string) => {
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     existingImages: prev.existingImages.filter((img) => img !== imageUrl),
-  //     removedImages: [...prev.removedImages, imageUrl],
-  //   }));
-  // };
+  const removeExistingImage = (imageUrl: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      existingImages: prev.images.filter((img) => img.url !== imageUrl),
+      removedImages: [...prev.removedImages, imageUrl],
+    }));
+  };
 
-  // const removeNewImage = (index: number) => {
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     newImages: prev.newImages.filter((_, i) => i !== index),
-  //   }));
-  //   setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
-  // };
+  const removeNewImage = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      newImages: prev.newImages.filter((_, i) => i !== index),
+    }));
+    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
-  // const restoreImage = (imageUrl: string) => {
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     existingImages: [...prev.existingImages, imageUrl],
-  //     removedImages: prev.removedImages.filter((img) => img !== imageUrl),
-  //   }));
-  // };
+  const restoreImage = (imageUrl: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      existingImages: [...prev.images, imageUrl],
+      removedImages: prev.removedImages.filter((img) => img !== imageUrl),
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     const token = await auth.currentUser?.getIdToken();
@@ -131,7 +138,7 @@ export default function EditPropertyForm({ property }: { property: Property }) {
       //   ...formData,
       //   id: property.id,
       // });
-      await updateProperty({
+      const res = await updateProperty({
         property: {
           id: property.id,
           address: formData.address1,
@@ -139,6 +146,10 @@ export default function EditPropertyForm({ property }: { property: Property }) {
         },
         token: token!,
       });
+      if (!res?.success) {
+        throw new Error(res?.message || "Failed to update property");
+      }
+      const imagesToDelete = formData.removedImages;
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -367,15 +378,15 @@ export default function EditPropertyForm({ property }: { property: Property }) {
 
           <div className="space-y-8">
             {/* Existing Images */}
-            {/* {formData.existingImages.length > 0 && (
+            {formData.images?.length > 0 && (
               <div>
                 <h3 className="font-medium mb-4">Existing Images</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {formData.existingImages.map((imageUrl, index) => (
+                  {formData.images.map((img, index) => (
                     <div key={`existing-${index}`} className="relative group">
                       <div className="aspect-square rounded-lg overflow-hidden border bg-muted">
                         <img
-                          src={imageUrl}
+                          src={img.url}
                           alt={`Property image ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
@@ -385,7 +396,7 @@ export default function EditPropertyForm({ property }: { property: Property }) {
                         variant="destructive"
                         size="icon"
                         className="absolute top-2 right-2 w-6 h-6"
-                        onClick={() => removeExistingImage(imageUrl)}
+                        onClick={() => removeExistingImage(img.url)}
                       >
                         <X className="w-3 h-3" />
                       </Button>
@@ -396,7 +407,7 @@ export default function EditPropertyForm({ property }: { property: Property }) {
                   ))}
                 </div>
               </div>
-            )} */}
+            )}
 
             {/* Removed Images (if any) */}
             {/* {formData.removedImages.length > 0 && (
@@ -422,7 +433,7 @@ export default function EditPropertyForm({ property }: { property: Property }) {
                   ))}
                 </div>
               </div>
-            )} */}
+            )}
 
             {/* New Images Upload Area */}
             <div>
@@ -444,14 +455,14 @@ export default function EditPropertyForm({ property }: { property: Property }) {
                   type="file"
                   accept="image/*"
                   multiple
-                  // onChange={handleNewImageUpload}
+                  onChange={handleNewImageUpload}
                   className="hidden"
                 />
               </div>
             </div>
 
             {/* New Image Previews */}
-            {/* {newImagePreviews.length > 0 && (
+            {newImagePreviews.length > 0 && (
               <div>
                 <h3 className="font-medium mb-4">
                   New Images ({newImagePreviews.length})
@@ -482,7 +493,7 @@ export default function EditPropertyForm({ property }: { property: Property }) {
                   ))}
                 </div>
               </div>
-            )} */}
+            )}
           </div>
         </div>
 

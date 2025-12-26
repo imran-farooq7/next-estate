@@ -23,7 +23,7 @@ const PropertyEditPAge = async ({
     price: property.price,
     description: property.description,
     postCode: property.postCode,
-    // images: property.images,
+    images: property.images,
   };
   return (
     <div>

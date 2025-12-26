@@ -38,21 +38,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await signInWithPopup(auth, provider);
   };
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    let intervalId: number | undefined;
+    const handle = auth.onIdTokenChanged(async (user) => {
       setCurrentUser(user ?? null);
       if (user) {
-        const authToken = await user.getIdTokenResult();
-        setCustomClaim(authToken.claims);
-
-        const refreshToken = await user.refreshToken;
-        if (authToken.token && refreshToken) {
-          await setTokens(authToken.token, refreshToken);
+        try {
+          const authTokenResult = await user.getIdTokenResult();
+          setCustomClaim(authTokenResult.claims);
+          const token = authTokenResult.token;
+          // `refreshToken` is available on the user object in the client SDK
+          const refreshToken = (user as any).refreshToken;
+          if (token && refreshToken) {
+            await setTokens(token, refreshToken);
+          }
+        } catch (err) {
+          console.log("error getting id token result:", err);
         }
       } else {
         await clearTokens();
       }
     });
-    return () => unsubscribe();
+
+    // Periodically force-refresh the ID token to avoid expiry (every 30 minutes)
+    intervalId = window.setInterval(async () => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const freshToken = await user.getIdToken(true);
+          const refreshToken = (user as any).refreshToken;
+          if (freshToken && refreshToken) {
+            await setTokens(freshToken, refreshToken);
+          }
+        } catch (err) {
+          console.log("error refreshing id token:", err);
+        }
+      }
+    }, 30 * 60 * 1000);
+
+    return () => {
+      handle();
+      if (intervalId) clearInterval(intervalId);
+    };
   }, []);
   return (
     <AuthContext

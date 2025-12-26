@@ -1,6 +1,9 @@
 "use server";
 
-import { PropertyFormData } from "@/components/new-proptery-form";
+import {
+  PropertyFormData,
+  UploadedImage,
+} from "@/components/new-proptery-form";
 import { auth, fireStore } from "@/firebase/server";
 import { Property } from "@/lib/types";
 import { refresh } from "next/cache";
@@ -91,7 +94,7 @@ export const savePropertyImage = async (
     images,
   }: {
     propertyId: string;
-    images: string[];
+    images: UploadedImage[];
   },
   token: string
 ) => {

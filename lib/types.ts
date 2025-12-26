@@ -1,3 +1,5 @@
+import { UploadedImage } from "@/components/new-proptery-form";
+
 export interface Property {
   id: string;
   address: string;
@@ -10,4 +12,5 @@ export interface Property {
   price: number;
   description: string;
   postCode: string;
+  images: UploadedImage[];
 }
