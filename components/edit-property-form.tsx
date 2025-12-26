@@ -485,7 +485,10 @@ export default function EditPropertyForm({ property }: { property: Property }) {
               <h3 className="font-medium mb-4">Add New Images</h3>
               <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
                 <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <Label htmlFor="newImages" className="cursor-pointer">
+                <Label
+                  htmlFor="newImages"
+                  className="cursor-pointer justify-center"
+                >
                   <div className="space-y-2">
                     <p className="font-medium">
                       Drop images here or click to browse
