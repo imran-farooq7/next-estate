@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ImageModal from "./image-modal";
 import { UploadedImage } from "./new-proptery-form";
+import ImageModal from "./image-modal";
 
 interface ImageGalleryProps {
   images: UploadedImage[];
