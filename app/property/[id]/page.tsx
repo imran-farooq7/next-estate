@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import PropertyDetails from "@/components/property/details";
 import { getPropertyById } from "@/action/properties.action";
+import PropertyDetails from "@/components/details";
 
 interface PropertyPageProps {
   params: Promise<{ id: string }>;
