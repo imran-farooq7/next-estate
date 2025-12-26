@@ -16,8 +16,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
-import PropertyContact from "./property-contact";
 import ImageGallery from "./image-gallery";
+import PropertyContact from "./property-contact";
 
 interface PropertyDetailsProps {
   property: Property;
